@@ -9,8 +9,16 @@ dotenv.config();
 const app = express();
 
 // ── Middleware ──
-const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173' || 'https://www.gatewaycomputers.shop/';
-const allowedOrigins = [clientUrl, 'http://127.0.0.1:5173', 'http://localhost:4173', 'http://127.0.0.1:4173', 'https://www.gatewaycomputers.shop/'].filter(Boolean);
+const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = [
+  clientUrl,
+  'http://127.0.0.1:5173',
+  'http://localhost:4173',
+  'http://127.0.0.1:4173',
+  'https://www.gatewaycomputers.shop',
+  'https://gatewaycomputers.shop',
+  'https://gateway-computers.vercel.app',
+].filter(Boolean);
 
 app.use(
   cors({
