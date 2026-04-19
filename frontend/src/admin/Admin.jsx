@@ -12,6 +12,7 @@ const NAV = [
   { id: 'bookings',        icon: 'fa-calendar-check', label: 'Booking Requests'  },
   { id: 'contacts',        icon: 'fa-envelope',       label: 'Contact Messages'  },
   { id: 'services',        icon: 'fa-concierge-bell', label: 'Manage Services'   },
+  { id: 'categories',      icon: 'fa-tags',           label: 'Manage Categories' },
 ];
 
 export default function Admin() {
@@ -21,10 +22,12 @@ export default function Admin() {
   const [bookingList, setBookingList] = useState([]);
   const [contactList, setContactList] = useState([]);
   const [serviceList, setServiceList] = useState([]);
+  const [categoryList, setCategoryList] = useState([]);
   const [addForm, setAddForm] = useState({ 
     name:'', 
-    category:'accessories', 
+    category:'', 
     price:'', 
+    originalPrice:'',
     stock:'', 
     desc:'',
     images: [],
@@ -45,15 +48,29 @@ export default function Admin() {
     }
   }, [token, user, isAdmin, navigate]);
 
-  // Fetch data on mount
   useEffect(() => {
     if (token) {
       fetchProducts();
       fetchBookings();
       fetchContacts();
       fetchServices();
+      fetchCategories();
     }
   }, [token]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      if (response.data.success) {
+        setCategoryList(response.data.categories);
+        if (response.data.categories.length > 0) {
+          setAddForm(f => ({ ...f, category: response.data.categories[0].id }));
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to load categories');
+    }
+  };
 
   const fetchProducts = async () => {
     try {
@@ -119,6 +136,9 @@ export default function Admin() {
       formData.append('name', addForm.name);
       formData.append('description', addForm.desc);
       formData.append('price', Number(addForm.price));
+      if (addForm.originalPrice) {
+        formData.append('originalPrice', Number(addForm.originalPrice));
+      }
       formData.append('category', addForm.category);
       formData.append('stock', Number(addForm.stock) || 0);
       
@@ -145,8 +165,9 @@ export default function Admin() {
         toast.success('Product added successfully!');
         setAddForm({ 
           name:'', 
-          category:'accessories', 
+          category: categoryList[0]?.id || '', 
           price:'', 
+          originalPrice:'',
           stock:'', 
           desc:'',
           images: [],
@@ -250,11 +271,12 @@ export default function Admin() {
 
         <div className="admin-content">
           {page === 'dashboard'       && <Dashboard productList={productList} bookingList={bookingList} />}
-          {page === 'add-product'     && <AddProduct form={addForm} onChange={handleAddChange} onImageChange={handleImageChange} onSubmit={handleAddSubmit} success={addSuccess} />}
+          {page === 'add-product'     && <AddProduct form={addForm} categoryList={categoryList} onChange={handleAddChange} onImageChange={handleImageChange} onSubmit={handleAddSubmit} success={addSuccess} />}
           {page === 'manage-products' && <ManageProducts list={productList} onDelete={deleteProduct} />}
           {page === 'bookings'        && <Bookings list={bookingList} onStatusChange={updateBookingStatus} />}
           {page === 'contacts'        && <Contacts list={contactList} />}
           {page === 'services'        && <Services list={serviceList} />}
+          {page === 'categories'      && <Categories list={categoryList} onRefresh={fetchCategories} />}
         </div>
       </div>
     </div>
@@ -338,7 +360,7 @@ function Dashboard({ productList, bookingList }) {
 }
 
 /* ── Add Product ── */
-function AddProduct({ form, onChange, onImageChange, onSubmit, success }) {
+function AddProduct({ form, categoryList, onChange, onImageChange, onSubmit, success }) {
   return (
     <div className="admin-form-page">
       <div className="admin-form-card">
@@ -365,16 +387,20 @@ function AddProduct({ form, onChange, onImageChange, onSubmit, success }) {
           <div className="form-group">
             <label>Category *</label>
             <select name="category" value={form.category} onChange={onChange} className="form-control">
-              <option value="accessories">Computer Accessories</option>
-              <option value="laptops">Laptops</option>
-              <option value="cctv">CCTV Equipment</option>
-              <option value="printers">Printers</option>
+              {categoryList.map(c => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
             </select>
           </div>
 
           <div className="form-group">
-            <label>Price (₹) *</label>
+            <label>Selling Price (₹) *</label>
             <input name="price" value={form.price} onChange={onChange} className="form-control" placeholder="e.g. 4999" type="number" min="0" />
+          </div>
+
+          <div className="form-group">
+            <label>Original Price / MSRP (₹) (Optional)</label>
+            <input name="originalPrice" value={form.originalPrice} onChange={onChange} className="form-control" placeholder="e.g. 5999" type="number" min="0" />
           </div>
 
           <div className="form-group">
@@ -676,6 +702,96 @@ function Services({ list }) {
             {list.length === 0 && (
               <tr><td colSpan={6} style={{textAlign:'center',padding:'40px',color:'var(--text-muted)'}}>No services found</td></tr>
             )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ── Categories ── */
+function Categories({ list, onRefresh }) {
+  const [form, setForm] = useState({ id: '', label: '', icon: 'fa-box' });
+
+  const handleAdd = async () => {
+    if (!form.id || !form.label) {
+      toast.error('ID and Label are required');
+      return;
+    }
+    try {
+      const response = await api.post('/categories', form);
+      if (response.data.success) {
+        toast.success('Category added');
+        setForm({ id: '', label: '', icon: 'fa-box' });
+        onRefresh();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to add category');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!confirm('Delete this category?')) return;
+    try {
+      const response = await api.delete(`/categories/${id}`);
+      if (response.data.success) {
+        toast.success('Category deleted');
+        onRefresh();
+      }
+    } catch (error) {
+      toast.error('Failed to delete category');
+    }
+  };
+
+  return (
+    <div className="admin-table-page">
+      <div className="admin-form-card" style={{ marginBottom: '32px' }}>
+        <h2 style={{ marginBottom: '16px' }}>Add New Category</h2>
+        <div className="admin-form-grid">
+          <div className="form-group">
+            <label>Category ID (e.g. "gaming-pcs") *</label>
+            <input className="form-control" value={form.id} onChange={e => setForm({...form, id: e.target.value.toLowerCase().replace(/\s+/g, '-')})} />
+          </div>
+          <div className="form-group">
+            <label>Label (e.g. "Gaming PCs") *</label>
+            <input className="form-control" value={form.label} onChange={e => setForm({...form, label: e.target.value})} />
+          </div>
+          <div className="form-group">
+            <label>Icon Class (e.g. "fa-desktop")</label>
+            <input className="form-control" value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} />
+          </div>
+        </div>
+        <button className="btn btn-primary" onClick={handleAdd} style={{ marginTop: '16px' }}>
+          Add Category
+        </button>
+      </div>
+
+      <div className="atp-header">
+        <h2>{list.length} Categories</h2>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Label</th>
+              <th>Icon</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map(c => (
+              <tr key={c.id}>
+                <td style={{ fontWeight: 'bold', color: 'white' }}>{c.id}</td>
+                <td>{c.label}</td>
+                <td><i className={`fa-solid ${c.icon}`} style={{ marginRight: '8px' }} /> {c.icon}</td>
+                <td>
+                  <button className="tbl-btn tbl-btn--del" onClick={() => handleDelete(c.id)}>
+                    <i className="fa-solid fa-trash" />
+                  </button>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>

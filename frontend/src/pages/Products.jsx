@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { productCategories, getWhatsAppLink } from '../data/data';
+import { getWhatsAppLink } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './Products.css';
@@ -9,11 +9,24 @@ export default function Products() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      if (response.data.success) {
+        setCategories(response.data.categories);
+      }
+    } catch (error) {
+      console.error('Failed to load categories');
+    }
+  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -56,7 +69,7 @@ export default function Products() {
               >
                 <i className="fa-solid fa-grip" /> All Products
               </button>
-              {productCategories.map(c => (
+              {categories.map(c => (
                 <button
                   key={c.id}
                   className={`cat-tab ${activeCategory === c.id ? 'cat-tab--active' : ''}`}
@@ -81,7 +94,7 @@ export default function Products() {
           {/* Results Count */}
           <div className="results-count">
             Showing <strong>{filtered.length}</strong> product{filtered.length !== 1 ? 's' : ''}
-            {activeCategory !== 'all' && ` in ${productCategories.find(c=>c.id===activeCategory)?.label}`}
+            {activeCategory !== 'all' && ` in ${categories.find(c=>c.id===activeCategory)?.label || 'Category'}`}
           </div>
 
           {/* Products Grid */}
@@ -93,7 +106,7 @@ export default function Products() {
           ) : filtered.length > 0 ? (
             <div className="products-grid">
               {filtered.map(p => (
-                <ProductCard key={p.id} product={p} />
+                <ProductCard key={p._id} product={p} categories={categories} />
               ))}
             </div>
           ) : (
@@ -112,7 +125,7 @@ export default function Products() {
   );
 }
 
-function ProductCard({ product: p }) {
+function ProductCard({ product: p, categories }) {
   const msg = `Hi! I'm interested in ${p.name} (₹${p.price.toLocaleString('en-IN')}). Please share more details.`;
   // Use Cloudinary URL directly (already full URL)
   const imageUrl = p.images?.[0] || 'https://via.placeholder.com/400';
@@ -127,17 +140,24 @@ function ProductCard({ product: p }) {
         </div>
       </Link>
       <div className="product-body">
-        <div className="product-cat-tag">{productCategories.find(c=>c.id===p.category)?.label}</div>
-        <Link to={`/products/${p.id}`}><h3 className="product-name">{p.name}</h3></Link>
+        <div className="product-cat-tag">{categories?.find(c=>c.id===p.category)?.label || p.category}</div>
+        <Link to={`/products/${p._id}`}><h3 className="product-name">{p.name}</h3></Link>
         <div className="product-specs">
           {p.specs.slice(0, 2).map(s => (
             <span key={s} className="spec-chip"><i className="fa-solid fa-check" /> {s}</span>
           ))}
         </div>
         <div className="product-footer">
-          <div className="product-price">₹{p.price.toLocaleString('en-IN')}</div>
+          <div className="product-price">
+            {p.originalPrice && p.originalPrice > p.price && (
+              <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '14px', marginRight: '8px' }}>
+                ₹{p.originalPrice.toLocaleString('en-IN')}
+              </span>
+            )}
+            ₹{p.price.toLocaleString('en-IN')}
+          </div>
           <div className="product-actions">
-            <Link to={`/products/${p.id}`} className="btn btn-ghost btn-sm">Details</Link>
+            <Link to={`/products/${p._id}`} className="btn btn-ghost btn-sm">Details</Link>
             <a href={getWhatsAppLink(msg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-sm">
               <i className="fa-brands fa-whatsapp" /> Enquire
             </a>

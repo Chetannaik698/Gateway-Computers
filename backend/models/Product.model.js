@@ -11,6 +11,10 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Description is required'],
     },
+    originalPrice: {
+      type: Number,
+      min: [0, 'Original Price cannot be negative'],
+    },
     price: {
       type: Number,
       required: [true, 'Price is required'],
@@ -19,7 +23,6 @@ const productSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: ['accessories', 'laptops', 'cctv', 'printers'],
     },
     images: [
       {

@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import UPIPayment from '../components/UPIPayment';
-import { productCategories, getWhatsAppLink } from '../data/data';
+import { getWhatsAppLink } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './ProductDetail.css';
@@ -11,12 +10,36 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
+  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     fetchProduct();
+    fetchCategories();
   }, [id]);
+
+  const fetchCategories = async () => {
+    try {
+      const response = await api.get('/categories');
+      if (response.data.success) {
+        setCategories(response.data.categories);
+      }
+    } catch (error) {
+      console.error('Failed to load categories');
+    }
+  };
+
+  const fetchRelated = async (categoryId) => {
+    try {
+      const res = await api.get(`/products/category/${categoryId}`);
+      if (res.data.success) {
+        setRelated(res.data.products.filter(p => p._id !== id).slice(0, 4));
+      }
+    } catch (error) {
+      console.error('Failed to load related products');
+    }
+  };
 
   const fetchProduct = async () => {
     setLoading(true);
@@ -24,15 +47,7 @@ export default function ProductDetail() {
       const response = await api.get(`/products/${id}`);
       if (response.data.success) {
         setProduct(response.data.product);
-        // Fetch related products from same category
-        const catResponse = await api.get(`/products/category/${response.data.product.category}`);
-        if (catResponse.data.success) {
-          setRelated(
-            catResponse.data.products
-              .filter(p => p._id !== response.data.product._id)
-              .slice(0, 3)
-          );
-        }
+        fetchRelated(response.data.product.category);
       }
     } catch (error) {
       toast.error('Product not found');
@@ -64,9 +79,8 @@ export default function ProductDetail() {
     );
   }
 
-  const catLabel = productCategories.find(c => c.id === product.category)?.label;
+  const catLabel = categories.find(c => c.id === product.category)?.label;
   const waMsg    = `Hi! I'm interested in ${product.name} (₹${product.price.toLocaleString('en-IN')}). Please share more details.`;
-  const waBuyMsg = `Hi! I want to buy ${product.name} (₹${product.price.toLocaleString('en-IN')}). Please confirm availability.`;
 
   return (
     <div>
@@ -105,9 +119,23 @@ export default function ProductDetail() {
 
             {/* Info */}
             <div className="pd-info-col">
-              <div className="pd-cat-tag">{catLabel}</div>
-              <h1 className="pd-name">{product.name}</h1>
-              <div className="pd-price">₹{product.price.toLocaleString('en-IN')}</div>
+              <div className="pd-category">
+                <i className="fa-solid fa-tag" /> {catLabel || product.category}
+              </div>
+              <h1 className="pd-title">{product.name}</h1>
+              
+              <div className="pd-price-wrap">
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '20px', marginRight: '12px' }}>
+                    ₹{product.originalPrice.toLocaleString('en-IN')}
+                  </span>
+                )}
+                <div className="pd-price">₹{product.price.toLocaleString('en-IN')}</div>
+                <span className={`status ${product.isAvailable ? 'status-active' : 'status-outofstock'}`}>
+                  {product.isAvailable ? 'In Stock' : 'Out of Stock'}
+                </span>
+              </div>
+
               <div className="pd-rating">
                 {[1,2,3,4,5].map(n => <i key={n} className="fa-solid fa-star" style={{color:'#fbbf24'}} />)}
                 <span>(4.8 / 5 · 38 reviews)</span>
@@ -150,18 +178,25 @@ export default function ProductDetail() {
           {related.length > 0 && (
             <div className="pd-related">
               <div className="divider" />
-              <h2 className="section-title">Related <span>Products</span></h2>
-              <div className="pd-related-grid">
+              <h2 className="related-title">Similar Products</h2>
+              <div className="grid-4">
                 {related.map(p => (
-                  <Link to={`/products/${p._id}`} key={p._id} className="related-card card">
-                    <div className="related-img">
-                      <img src={p.images?.[0] || 'https://via.placeholder.com/300'} alt={p.name} loading="lazy" />
+                  <div key={p._id} className="related-card card">
+                    <Link to={`/products/${p._id}`} className="related-img">
+                      <img src={p.images?.[0] || 'https://via.placeholder.com/200'} alt={p.name} />
+                    </Link>
+                    <div className="related-body">
+                      <Link to={`/products/${p._id}`}><h4>{p.name}</h4></Link>
+                      <div className="related-price">
+                        {p.originalPrice && p.originalPrice > p.price && (
+                          <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '12px', marginRight: '6px' }}>
+                            ₹{p.originalPrice.toLocaleString('en-IN')}
+                          </span>
+                        )}
+                        ₹{p.price.toLocaleString('en-IN')}
+                      </div>
                     </div>
-                    <div className="related-info">
-                      <h4>{p.name}</h4>
-                      <div className="product-price">₹{p.price.toLocaleString('en-IN')}</div>
-                    </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
             </div>

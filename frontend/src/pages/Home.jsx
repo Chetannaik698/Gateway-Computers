@@ -262,7 +262,14 @@ function ProductCard({ product }) {
         <Link to={`/products/${product._id}`} style={{textDecoration:'none', color:'inherit'}}>
           <h4>{product.name}</h4>
         </Link>
-        <div className="prod-price">₹{product.price.toLocaleString('en-IN')}</div>
+        <div className="prod-price">
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span style={{ textDecoration: 'line-through', color: 'var(--text-muted)', fontSize: '14px', marginRight: '8px' }}>
+              ₹{product.originalPrice.toLocaleString('en-IN')}
+            </span>
+          )}
+          ₹{product.price.toLocaleString('en-IN')}
+        </div>
         <a href={getWhatsAppLink(msg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-sm" style={{width:'100%',justifyContent:'center'}}>
           <i className="fa-brands fa-whatsapp" /> Enquire
         </a>

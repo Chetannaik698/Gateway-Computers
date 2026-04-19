@@ -50,13 +50,13 @@ const getProductsByCategory = async (req, res) => {
 // @access Private (Admin)
 const createProduct = async (req, res) => {
   try {
-    const { name, description, price, category, specs, badge, stock } = req.body;
+    const { name, description, originalPrice, price, category, specs, badge, stock } = req.body;
 
     // Handle uploaded image URLs from Cloudinary
     const images = req.files ? req.files.map(f => f.path) : [];
 
     const product = await Product.create({
-      name, description, price, category,
+      name, description, originalPrice, price, category,
       specs: specs ? JSON.parse(specs) : [],
       badge, stock, images,
     });

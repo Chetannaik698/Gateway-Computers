@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import logoDark from '../Assets/logo.jpeg';
-import logoLight from '../Assets/logo_white.png';
 import './Navbar.css';
 
 const navLinks = [
@@ -61,7 +60,7 @@ export default function Navbar() {
         <div className="container navbar__inner">
         <Link to="/" className="navbar__logo">
           <img
-            src={theme === 'light' ? logoLight : logoDark}
+            src={logoDark}
             alt="Gateway Computers logo"
             className="logo-image"
           />
