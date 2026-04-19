@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getWhatsAppLink, productCategories } from '../data/data';
+import { getWhatsAppLink } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './Products.css';
 
 export default function Products() {
-  const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -30,9 +29,7 @@ export default function Products() {
   };
 
   const filtered = products.filter(p => {
-    const matchCat = activeCategory === 'all' || p.category === activeCategory;
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    return matchCat && matchSearch;
+    return p.name.toLowerCase().includes(search.toLowerCase());
   });
 
   return (
@@ -47,25 +44,8 @@ export default function Products() {
 
       <section className="section">
         <div className="container">
-          {/* Filter Bar */}
-          <div className="products-filter-bar">
-            <div className="cat-tabs">
-              <button
-                className={`cat-tab ${activeCategory === 'all' ? 'cat-tab--active' : ''}`}
-                onClick={() => setActiveCategory('all')}
-              >
-                <i className="fa-solid fa-grip" /> All Products
-              </button>
-              {productCategories.map(c => (
-                <button
-                  key={c.id}
-                  className={`cat-tab ${activeCategory === c.id ? 'cat-tab--active' : ''}`}
-                  onClick={() => setActiveCategory(c.id)}
-                >
-                  <i className={`fa-solid ${c.icon}`} /> {c.label}
-                </button>
-              ))}
-            </div>
+          {/* Search Bar */}
+          <div className="products-search-bar">
             <div className="search-box">
               <i className="fa-solid fa-search" />
               <input
@@ -81,7 +61,6 @@ export default function Products() {
           {/* Results Count */}
           <div className="results-count">
             Showing <strong>{filtered.length}</strong> product{filtered.length !== 1 ? 's' : ''}
-            {activeCategory !== 'all' && ` in ${categories.find(c=>c.id===activeCategory)?.label || 'Category'}`}
           </div>
 
           {/* Products Grid */}
@@ -93,7 +72,7 @@ export default function Products() {
           ) : filtered.length > 0 ? (
             <div className="products-grid">
               {filtered.map(p => (
-                <ProductCard key={p._id} product={p} categories={categories} />
+                <ProductCard key={p._id} product={p} />
               ))}
             </div>
           ) : (
@@ -112,10 +91,17 @@ export default function Products() {
   );
 }
 
-function ProductCard({ product: p, categories }) {
+function ProductCard({ product: p }) {
   const msg = `Hi! I'm interested in ${p.name} (₹${p.price.toLocaleString('en-IN')}). Please share more details.`;
   // Use Cloudinary URL directly (already full URL)
   const imageUrl = p.images?.[0] || 'https://via.placeholder.com/400';
+  
+  const categoryLabels = {
+    'laptops': 'Laptops',
+    'accessories': 'Computer Accessories',
+    'cctv': 'CCTV Equipment',
+    'printers': 'Printers'
+  };
   
   return (
     <div className="product-card card">
@@ -127,7 +113,7 @@ function ProductCard({ product: p, categories }) {
         </div>
       </Link>
       <div className="product-body">
-        <div className="product-cat-tag">{categories?.find(c=>c.id===p.category)?.label || p.category}</div>
+        <div className="product-cat-tag">{categoryLabels[p.category] || p.category}</div>
         <Link to={`/products/${p._id}`}><h3 className="product-name">{p.name}</h3></Link>
         <div className="product-specs">
           {p.specs.slice(0, 2).map(s => (
