@@ -5,7 +5,16 @@ import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './Products.css';
 
+const productCategories = [
+  { id: 'all', label: 'All Products', icon: 'fa-grip' },
+  { id: 'laptops', label: 'Laptops', icon: 'fa-laptop' },
+  { id: 'accessories', label: 'Computer Accessories', icon: 'fa-keyboard' },
+  { id: 'cctv', label: 'CCTV Equipment', icon: 'fa-camera' },
+  { id: 'printers', label: 'Printers', icon: 'fa-print' },
+];
+
 export default function Products() {
+  const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -29,7 +38,9 @@ export default function Products() {
   };
 
   const filtered = products.filter(p => {
-    return p.name.toLowerCase().includes(search.toLowerCase());
+    const matchCat = activeCategory === 'all' || p.category === activeCategory;
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase());
+    return matchCat && matchSearch;
   });
 
   return (
@@ -44,8 +55,19 @@ export default function Products() {
 
       <section className="section">
         <div className="container">
-          {/* Search Bar */}
-          <div className="products-search-bar">
+          {/* Filter Bar */}
+          <div className="products-filter-bar">
+            <div className="cat-tabs">
+              {productCategories.map(c => (
+                <button
+                  key={c.id}
+                  className={`cat-tab ${activeCategory === c.id ? 'cat-tab--active' : ''}`}
+                  onClick={() => setActiveCategory(c.id)}
+                >
+                  <i className={`fa-solid ${c.icon}`} /> {c.label}
+                </button>
+              ))}
+            </div>
             <div className="search-box">
               <i className="fa-solid fa-search" />
               <input
@@ -61,6 +83,7 @@ export default function Products() {
           {/* Results Count */}
           <div className="results-count">
             Showing <strong>{filtered.length}</strong> product{filtered.length !== 1 ? 's' : ''}
+            {activeCategory !== 'all' && ` in ${productCategories.find(c => c.id === activeCategory)?.label}`}
           </div>
 
           {/* Products Grid */}
