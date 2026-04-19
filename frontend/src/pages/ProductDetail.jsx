@@ -231,7 +231,7 @@ export default function ProductDetail() {
       {/* Order Modal */}
       {showOrderModal && (
         <div className="upi-modal-overlay" onClick={() => setShowOrderModal(false)}>
-          <div className="upi-modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '450px'}}>
+          <div className="upi-modal-content order-modal-content" onClick={e => e.stopPropagation()}>
             
             {/* Close Button */}
             <button className="upi-modal-close" onClick={() => setShowOrderModal(false)}>
@@ -240,32 +240,32 @@ export default function ProductDetail() {
 
             {orderStep === 1 ? (
               <div className="order-form-step">
-                <h3 style={{marginBottom: '20px'}}>Order Details</h3>
+                <h3>Order Details</h3>
                 <div className="form-group" style={{marginBottom: '16px'}}>
-                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Full Name</label>
-                  <input type="text" className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)'}} value={orderDetails.name} onChange={e => setOrderDetails({...orderDetails, name: e.target.value})} placeholder="Enter your full name" required />
+                  <label>Full Name</label>
+                  <input type="text" className="form-control" value={orderDetails.name} onChange={e => setOrderDetails({...orderDetails, name: e.target.value})} placeholder="Enter your full name" required />
                 </div>
                 <div className="form-group" style={{marginBottom: '16px'}}>
-                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Delivery Address</label>
-                  <textarea className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)', resize: 'vertical'}} value={orderDetails.address} onChange={e => setOrderDetails({...orderDetails, address: e.target.value})} placeholder="Enter full delivery address" rows="3" required></textarea>
+                  <label>Delivery Address</label>
+                  <textarea className="form-control" style={{resize: 'vertical'}} value={orderDetails.address} onChange={e => setOrderDetails({...orderDetails, address: e.target.value})} placeholder="Enter full delivery address" rows="3" required></textarea>
                 </div>
                 <div className="form-group" style={{marginBottom: '20px'}}>
-                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Quantity</label>
-                  <input type="number" className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)'}} value={orderDetails.quantity} onChange={e => setOrderDetails({...orderDetails, quantity: Math.max(1, parseInt(e.target.value) || 1)})} min="1" required />
+                  <label>Quantity</label>
+                  <input type="number" className="form-control" value={orderDetails.quantity} onChange={e => setOrderDetails({...orderDetails, quantity: Math.max(1, parseInt(e.target.value) || 1)})} min="1" required />
                 </div>
 
-                <div className="order-summary" style={{background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '8px', marginBottom: '20px'}}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
-                    <span style={{color: 'var(--text-muted)'}}>Item Total ({orderDetails.quantity} x ₹{product.price.toLocaleString('en-IN')})</span>
+                <div className="order-summary">
+                  <div className="summary-row">
+                    <span className="summary-label">Item Total ({orderDetails.quantity} x ₹{product.price.toLocaleString('en-IN')})</span>
                     <span>₹{(product.price * orderDetails.quantity).toLocaleString('en-IN')}</span>
                   </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
-                    <span style={{color: 'var(--text-muted)'}}>Delivery Charge</span>
+                  <div className="summary-row">
+                    <span className="summary-label">Delivery Charge</span>
                     <span>₹{deliveryCharge.toLocaleString('en-IN')}</span>
                   </div>
-                  <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px'}}>
+                  <div className="summary-row total-row">
                     <span>Total Amount</span>
-                    <span style={{color: 'var(--orange)'}}>₹{totalAmount.toLocaleString('en-IN')}</span>
+                    <span className="total-amount">₹{totalAmount.toLocaleString('en-IN')}</span>
                   </div>
                 </div>
 
@@ -293,8 +293,8 @@ export default function ProductDetail() {
                   note={`Order: ${product.name}`} 
                   onClose={() => setShowOrderModal(false)}
                 />
-                <div style={{ textAlign: 'center', marginTop: '20px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
-                  <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '15px', lineHeight: '1.5' }}>
+                <div className="payment-confirmation-box">
+                  <p>
                     Scan and pay <strong>₹{totalAmount.toLocaleString('en-IN')}</strong>. Once paid, click below to confirm and send the screenshot on WhatsApp.
                   </p>
                   <button 
