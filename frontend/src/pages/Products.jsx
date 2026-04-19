@@ -114,9 +114,8 @@ export default function Products() {
 
 function ProductCard({ product: p }) {
   const msg = `Hi! I'm interested in ${p.name} (₹${p.price.toLocaleString('en-IN')}). Please share more details.`;
-  const imageUrl = p.images?.[0] 
-    ? `${import.meta.env.VITE_API_URL?.replace(/\/api$/, '')}${p.images[0]}` 
-    : 'https://via.placeholder.com/400';
+  // Use Cloudinary URL directly (already full URL)
+  const imageUrl = p.images?.[0] || 'https://via.placeholder.com/400';
   
   return (
     <div className="product-card card">

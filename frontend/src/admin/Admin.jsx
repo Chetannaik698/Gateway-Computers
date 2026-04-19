@@ -470,9 +470,8 @@ function ManageProducts({ list, onDelete }) {
           </thead>
           <tbody>
             {filtered.map((p, i) => {
-              const imageUrl = p.images?.[0] 
-                ? `${import.meta.env.VITE_API_URL?.replace(/\/api$/, '')}${p.images[0]}` 
-                : 'https://via.placeholder.com/40';
+              // Use Cloudinary URL directly (already full URL)
+              const imageUrl = p.images?.[0] || 'https://via.placeholder.com/40';
               
               return (
                 <tr key={p._id}>

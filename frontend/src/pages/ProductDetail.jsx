@@ -87,14 +87,14 @@ export default function ProductDetail() {
             {/* Image */}
             <div className="pd-image-col">
               <div className="pd-img-frame">
-                <img src={product.images?.[0] ? `${import.meta.env.VITE_API_URL?.replace(/\/api$/, '')}${product.images[0]}` : 'https://via.placeholder.com/600'} alt={product.name} />
+                <img src={product.images?.[0] || 'https://via.placeholder.com/600'} alt={product.name} />
                 {product.badge && <span className="badge pd-badge">{product.badge}</span>}
               </div>
               {product.images?.length > 1 && (
                 <div className="pd-img-thumbnails">
                   {product.images.map((img, i) => (
                     <div key={i} className={`pd-thumb ${i===0?'pd-thumb--active':''}`}>
-                      <img src={`${import.meta.env.VITE_API_URL?.replace(/\/api$/, '')}${img}`} alt="" />
+                      <img src={img} alt="" />
                     </div>
                   ))}
                 </div>
@@ -153,7 +153,7 @@ export default function ProductDetail() {
                 {related.map(p => (
                   <Link to={`/products/${p._id}`} key={p._id} className="related-card card">
                     <div className="related-img">
-                      <img src={p.images?.[0] ? `${import.meta.env.VITE_API_URL?.replace(/\/api$/, '')}${p.images[0]}` : 'https://via.placeholder.com/300'} alt={p.name} loading="lazy" />
+                      <img src={p.images?.[0] || 'https://via.placeholder.com/300'} alt={p.name} loading="lazy" />
                     </div>
                     <div className="related-info">
                       <h4>{p.name}</h4>

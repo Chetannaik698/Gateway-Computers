@@ -52,8 +52,8 @@ const createProduct = async (req, res) => {
   try {
     const { name, description, price, category, specs, badge, stock } = req.body;
 
-    // Handle uploaded image paths
-    const images = req.files ? req.files.map(f => `/uploads/${f.filename}`) : [];
+    // Handle uploaded image URLs from Cloudinary
+    const images = req.files ? req.files.map(f => f.path) : [];
 
     const product = await Product.create({
       name, description, price, category,
@@ -73,9 +73,12 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const updates = { ...req.body };
+    
+    // If new images are uploaded, use Cloudinary URLs
     if (req.files?.length) {
-      updates.images = req.files.map(f => `/uploads/${f.filename}`);
+      updates.images = req.files.map(f => f.path);
     }
+    
     if (updates.specs) updates.specs = JSON.parse(updates.specs);
 
     const product = await Product.findByIdAndUpdate(req.params.id, updates, {
