@@ -1,10 +1,26 @@
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { services, products, whyChooseUs, stats, getWhatsAppLink, PHONE_DISPLAY } from '../data/data';
+import { services, whyChooseUs, stats, getWhatsAppLink, PHONE_DISPLAY } from '../data/data';
+import api from '../utils/api';
 import './Home.css';
 
 export default function Home() {
-  const featuredProducts = products.slice(0, 4);
+  const [featuredProducts, setFeaturedProducts] = useState([]);
   const featuredServices = services.slice(0, 3);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await api.get('/products');
+        if (response.data.success) {
+          setFeaturedProducts(response.data.products.slice(0, 4));
+        }
+      } catch (error) {
+        console.error('Failed to fetch products', error);
+      }
+    };
+    fetchProducts();
+  }, []);
 
   return (
     <div className="home">
@@ -234,15 +250,18 @@ export default function Home() {
 
 function ProductCard({ product }) {
   const msg = `Hi! I'm interested in ${product.name} (₹${product.price.toLocaleString('en-IN')}). Please share more details.`;
+  const imageUrl = product.images?.[0] || 'https://via.placeholder.com/400';
   return (
     <div className="prod-card card">
-      <div className="prod-img-wrap">
-        <img src={product.image} alt={product.name} loading="lazy" />
+      <Link to={`/products/${product._id}`} className="prod-img-wrap" style={{display: 'block'}}>
+        <img src={imageUrl} alt={product.name} loading="lazy" />
         {product.badge && <span className="badge prod-badge">{product.badge}</span>}
-      </div>
+      </Link>
       <div className="prod-info">
         <div className="prod-cat">{product.category}</div>
-        <h4>{product.name}</h4>
+        <Link to={`/products/${product._id}`} style={{textDecoration:'none', color:'inherit'}}>
+          <h4>{product.name}</h4>
+        </Link>
         <div className="prod-price">₹{product.price.toLocaleString('en-IN')}</div>
         <a href={getWhatsAppLink(msg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-sm" style={{width:'100%',justifyContent:'center'}}>
           <i className="fa-brands fa-whatsapp" /> Enquire

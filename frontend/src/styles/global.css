@@ -311,10 +311,10 @@ input, select, textarea {
 }
 .form-control {
   background: var(--black-3);
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid var(--navbar-border);
   border-radius: 8px;
   padding: 13px 16px;
-  color: white;
+  color: var(--text-primary);
   font-size: 15px;
   transition: var(--transition);
   outline: none;

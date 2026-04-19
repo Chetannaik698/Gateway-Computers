@@ -13,6 +13,7 @@ import ProductDetail from './pages/ProductDetail.jsx';
 import Booking       from './pages/Booking.jsx';
 import Contact       from './pages/Contact.jsx';
 import Auth          from './pages/Auth.jsx';
+import Payment       from './pages/Payment.jsx';
 import Admin         from './admin/Admin.jsx';
 
 // Scroll to top on every route change
@@ -45,6 +46,7 @@ export default function App() {
           <Route path="/products" element={<Layout><Products /></Layout>} />
           <Route path="/products/:id" element={<Layout><ProductDetail /></Layout>} />
           <Route path="/booking" element={<Layout><Booking /></Layout>} />
+          <Route path="/payment" element={<Layout><Payment /></Layout>} />
           <Route path="/contact" element={<Layout><Contact /></Layout>} />
           <Route path="/login" element={<Layout><Auth /></Layout>} />
           <Route path="/signup" element={<Layout><Auth /></Layout>} />

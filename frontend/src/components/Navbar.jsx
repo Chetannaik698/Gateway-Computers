@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import logoDark from '../Assets/logo.jpeg';
@@ -10,6 +10,7 @@ const navLinks = [
   { path: '/services',  label: 'Services' },
   { path: '/products',  label: 'Products' },
   { path: '/booking',   label: 'Book Now' },
+  { path: '/payment',   label: 'Pay Online'},
   { path: '/contact',   label: 'Contact'  },
 ];
 
@@ -55,8 +56,9 @@ export default function Navbar() {
   };
 
   return (
-    <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
-      <div className="container navbar__inner">
+    <>
+      <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
+        <div className="container navbar__inner">
         <Link to="/" className="navbar__logo">
           <img
             src={theme === 'light' ? logoLight : logoDark}
@@ -131,6 +133,7 @@ export default function Navbar() {
           <span /><span /><span />
         </button>
       </div>
+      </header>
 
       <div className={`mobile-menu ${menuOpen ? 'mobile-menu--open' : ''}`}>
         <nav className="mobile-nav">
@@ -177,6 +180,6 @@ export default function Navbar() {
       </div>
 
       {menuOpen && <div className="mobile-overlay active" onClick={() => setMenuOpen(false)} />}
-    </header>
+    </>
   );
 }

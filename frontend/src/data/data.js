@@ -9,6 +9,13 @@ export const WHATSAPP_BASE = `https://wa.me/919591064356`;
 export const getWhatsAppLink = (message = 'Hello! I am interested in your products/services.') =>
   `${WHATSAPP_BASE}?text=${encodeURIComponent(message)}`;
 
+export const UPI_CONFIG = {
+  // Placeholder values - user can update these
+  upiId: 'akkiachari10-1@oksbi', 
+  payeeName: 'Gateway Computers',
+  currency: 'INR'
+};
+
 export const services = [
   {
     id: 1,

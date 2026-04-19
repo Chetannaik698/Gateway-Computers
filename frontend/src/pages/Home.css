@@ -157,7 +157,7 @@
   white-space: nowrap;
 }
 .theme-light .hero-title {
-  color: var(--text-primary);
+  color: #1d4ed8;
 }
 .theme-light .hero-card-float {
   color: var(--text-primary);

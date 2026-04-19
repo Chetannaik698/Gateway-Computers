@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { services, getWhatsAppLink } from '../data/data';
+import UPIPayment from '../components/UPIPayment';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './Booking.css';
@@ -73,6 +74,13 @@ export default function Booking() {
             <h2>Booking Received!</h2>
             <p>Thank you, <strong>{form.name}</strong>! We've received your booking request for <strong>{form.service}</strong> on <strong>{form.date}</strong>.</p>
             <p>Our team will contact you at <strong>+91 {form.phone}</strong> shortly to confirm.</p>
+            
+            <div className="booking-advance-payment" style={{ marginTop: '24px', marginBottom: '24px', padding: '24px', background: 'var(--black-3)', borderRadius: '12px', border: '1px solid rgba(255,107,0,0.2)' }}>
+              <h3 style={{ marginBottom: '16px', color: 'var(--orange)' }}>Pay Booking Advance (Optional)</h3>
+              <p style={{ marginBottom: '16px', fontSize: '14px', color: 'var(--text-muted)' }}>You can pay an advance of ₹500 to confirm your slot immediately.</p>
+              <UPIPayment amount={500} note={`Advance for ${form.service}`} />
+            </div>
+
             <div className="success-actions">
               <a href={getWhatsAppLink(waMsg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-lg">
                 <i className="fa-brands fa-whatsapp" /> Confirm via WhatsApp

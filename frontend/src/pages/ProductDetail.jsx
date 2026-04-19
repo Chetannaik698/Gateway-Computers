@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import UPIPayment from '../components/UPIPayment';
 import { productCategories, getWhatsAppLink } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
@@ -11,6 +12,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -131,9 +133,9 @@ export default function ProductDetail() {
                 <a href={getWhatsAppLink(waMsg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-lg">
                   <i className="fa-brands fa-whatsapp" /> WhatsApp Enquiry
                 </a>
-                <a href={getWhatsAppLink(waBuyMsg)} target="_blank" rel="noopener noreferrer" className="btn btn-outline btn-lg">
+                <button onClick={() => setShowPaymentModal(true)} className="btn btn-outline btn-lg">
                   <i className="fa-solid fa-shopping-cart" /> Buy Now
-                </a>
+                </button>
               </div>
 
               <div className="pd-trust-badges">
@@ -166,6 +168,27 @@ export default function ProductDetail() {
           )}
         </div>
       </section>
+
+      {/* Payment Modal */}
+      {showPaymentModal && (
+        <div className="upi-modal-overlay" onClick={() => setShowPaymentModal(false)}>
+          <div className="upi-modal-content" onClick={e => e.stopPropagation()}>
+            <UPIPayment 
+              amount={product.price} 
+              note={`Purchase: ${product.name}`} 
+              onClose={() => setShowPaymentModal(false)}
+            />
+            <div style={{ textAlign: 'center', marginTop: '16px', background: 'var(--card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+              <p style={{ color: 'var(--text-muted)', marginBottom: '12px', fontSize: '14px' }}>
+                Paid? Please send us a screenshot via WhatsApp to confirm your order.
+              </p>
+              <a href={getWhatsAppLink(`Hi! I just bought ${product.name} for ₹${product.price}. Here is my payment screenshot:`)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp" style={{ width: '100%', justifyContent: 'center' }}>
+                <i className="fa-brands fa-whatsapp" /> Share Screenshot
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
