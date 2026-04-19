@@ -24,6 +24,11 @@ const productSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Category is required'],
     },
+    size: {
+      type: String,
+      enum: ['small', 'large'],
+      default: 'small',
+    },
     images: [
       {
         type: String, // image file paths / URLs

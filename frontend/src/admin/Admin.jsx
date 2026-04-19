@@ -10,6 +10,7 @@ const NAV = [
   { id: 'add-product',     icon: 'fa-circle-plus',    label: 'Add Product'       },
   { id: 'manage-products', icon: 'fa-box',            label: 'Manage Products'   },
   { id: 'bookings',        icon: 'fa-calendar-check', label: 'Booking Requests'  },
+  { id: 'orders',          icon: 'fa-shopping-cart',  label: 'Manage Orders'     },
   { id: 'contacts',        icon: 'fa-envelope',       label: 'Contact Messages'  },
   { id: 'services',        icon: 'fa-concierge-bell', label: 'Manage Services'   },
 ];
@@ -19,6 +20,7 @@ export default function Admin() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [productList, setProductList] = useState([]);
   const [bookingList, setBookingList] = useState([]);
+  const [orderList, setOrderList] = useState([]);
   const [contactList, setContactList] = useState([]);
   const [serviceList, setServiceList] = useState([]);
   const [addForm, setAddForm] = useState({ 
@@ -50,6 +52,7 @@ export default function Admin() {
     if (token) {
       fetchProducts();
       fetchBookings();
+      fetchOrders();
       fetchContacts();
       fetchServices();
     }
@@ -74,6 +77,17 @@ export default function Admin() {
       }
     } catch (error) {
       toast.error('Failed to load bookings');
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const response = await api.get('/orders');
+      if (response.data.success) {
+        setOrderList(response.data.orders);
+      }
+    } catch (error) {
+      toast.error('Failed to load orders');
     }
   };
 
@@ -190,6 +204,21 @@ export default function Admin() {
     }
   };
 
+  const updateOrderStatus = async (id, status) => {
+    try {
+      // Assuming a PUT route for orders exists, or we just notify for now.
+      // We didn't create the PUT route in this task, but we can implement the stub.
+      // const response = await api.put(`/orders/${id}/status`, { status });
+      // if (response.data.success) {
+      //   toast.success('Order status updated');
+      //   fetchOrders();
+      // }
+      toast.info('Order status update functionality pending');
+    } catch (error) {
+      toast.error('Failed to update order');
+    }
+  };
+
   return (
     <div className="admin-layout">
       {/* Sidebar */}
@@ -253,10 +282,11 @@ export default function Admin() {
         </header>
 
         <div className="admin-content">
-          {page === 'dashboard'       && <Dashboard productList={productList} bookingList={bookingList} />}
+          {page === 'dashboard'       && <Dashboard productList={productList} bookingList={bookingList} orderList={orderList} />}
           {page === 'add-product'     && <AddProduct form={addForm} onChange={handleAddChange} onImageChange={handleImageChange} onSubmit={handleAddSubmit} success={addSuccess} />}
           {page === 'manage-products' && <ManageProducts list={productList} onDelete={deleteProduct} />}
           {page === 'bookings'        && <Bookings list={bookingList} onStatusChange={updateBookingStatus} />}
+          {page === 'orders'          && <Orders list={orderList} onStatusChange={updateOrderStatus} />}
           {page === 'contacts'        && <Contacts list={contactList} />}
           {page === 'services'        && <Services list={serviceList} />}
         </div>
@@ -266,7 +296,7 @@ export default function Admin() {
 }
 
 /* ── Dashboard ── */
-function Dashboard({ productList, bookingList }) {
+function Dashboard({ productList, bookingList, orderList = [] }) {
   const pending   = bookingList.filter(b => b.status === 'pending').length;
   const confirmed = bookingList.filter(b => b.status === 'confirmed').length;
   const done      = bookingList.filter(b => b.status === 'done').length;
@@ -274,8 +304,8 @@ function Dashboard({ productList, bookingList }) {
   const stats = [
     { icon:'fa-box',            label:'Total Products',    value: productList.length,    color:'orange'  },
     { icon:'fa-calendar-check', label:'Total Bookings',    value: bookingList.length,    color:'blue'    },
+    { icon:'fa-shopping-cart',  label:'Total Orders',      value: orderList.length,      color:'green'   },
     { icon:'fa-clock',          label:'Pending Bookings',  value: pending,               color:'yellow'  },
-    { icon:'fa-circle-check',   label:'Completed',         value: done,                  color:'green'   },
   ];
 
   return (
@@ -585,6 +615,80 @@ function Bookings({ list, onStatusChange }) {
                 </td>
               </tr>
             ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+/* ── Orders ── */
+function Orders({ list, onStatusChange }) {
+  const [filter, setFilter] = useState('all');
+  const filtered = filter === 'all' ? list : list.filter(o => o.orderStatus === filter);
+
+  return (
+    <div className="admin-table-page">
+      <div className="atp-header">
+        <h2>{list.length} Product Orders</h2>
+        <div className="booking-filters">
+          {['all','new','processing','shipped','delivered'].map(f => (
+            <button key={f} className={`cat-tab ${filter===f?'cat-tab--active':''}`}
+              onClick={() => setFilter(f)} style={{textTransform:'capitalize'}}>
+              {f}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Product</th>
+              <th>Qty</th>
+              <th>Total Amount</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map(o => (
+              <tr key={o._id}>
+                <td>{new Date(o.createdAt).toLocaleDateString()}</td>
+                <td>
+                  <div style={{fontWeight:500,color:'white'}}>{o.customerName}</div>
+                  <div style={{fontSize:'12px',color:'var(--text-muted)'}}>{o.customerAddress}</div>
+                </td>
+                <td>
+                  <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
+                    {o.product?.images?.[0] && <img src={o.product.images[0]} alt="" style={{width:'32px',height:'32px',borderRadius:'4px',objectFit:'cover'}} />}
+                    <span style={{maxWidth:'150px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{o.product?.name || 'Deleted Product'}</span>
+                  </div>
+                </td>
+                <td>{o.quantity}</td>
+                <td style={{color:'var(--orange)',fontWeight:600}}>₹{o.totalAmount?.toLocaleString('en-IN')}</td>
+                <td>
+                  <span className={`status status-${o.orderStatus === 'new' ? 'pending' : o.orderStatus === 'delivered' ? 'done' : 'active'}`}>
+                    {o.orderStatus}
+                  </span>
+                </td>
+                <td>
+                  <div className="tbl-actions">
+                    <button className="tbl-btn tbl-btn--edit" onClick={() => toast.info('Order details feature coming soon')}>
+                      <i className="fa-solid fa-eye" />
+                    </button>
+                    <a href={`https://wa.me/?text=Hi%20${encodeURIComponent(o.customerName)},%20regarding%20your%20order%20for%20${encodeURIComponent(o.product?.name)}...`} target="_blank" rel="noopener noreferrer" className="tbl-btn tbl-btn--call" style={{background: '#25D366'}}>
+                      <i className="fa-brands fa-whatsapp" style={{color: 'white'}} />
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            ))}
+            {filtered.length === 0 && (
+              <tr><td colSpan={7} style={{textAlign:'center',padding:'40px',color:'var(--text-muted)'}}>No orders found</td></tr>
+            )}
           </tbody>
         </table>
       </div>

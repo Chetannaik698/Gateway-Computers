@@ -12,7 +12,14 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [orderStep, setOrderStep] = useState(1);
+  const [orderDetails, setOrderDetails] = useState({
+    name: '',
+    address: '',
+    quantity: 1,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -69,6 +76,35 @@ export default function ProductDetail() {
 
   const catLabel = productCategories.find(c => c.id === product.category)?.label;
   const waMsg    = `Hi! I'm interested in ${product.name} (₹${product.price.toLocaleString('en-IN')}). Please share more details.`;
+
+  const deliveryCharge = product.size === 'large' ? 200 : 150;
+  const totalAmount = (product.price * orderDetails.quantity) + deliveryCharge;
+
+  const handleConfirmOrder = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await api.post('/orders', {
+        product: product._id,
+        customerName: orderDetails.name,
+        customerAddress: orderDetails.address,
+        quantity: orderDetails.quantity,
+        paymentStatus: 'completed'
+      });
+
+      if (res.data.success) {
+        toast.success("Order details saved! Redirecting to WhatsApp...");
+        setShowOrderModal(false);
+        setOrderStep(1);
+        
+        const msg = `Hi! I have placed an order.\n\n*Product:* ${product.name}\n*Quantity:* ${orderDetails.quantity}\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Name:* ${orderDetails.name}\n*Address:* ${orderDetails.address}\n\nHere is my payment screenshot:`;
+        window.open(getWhatsAppLink(msg), '_blank');
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to place order');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div>
@@ -149,7 +185,7 @@ export default function ProductDetail() {
                 <a href={getWhatsAppLink(waMsg)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp btn-lg">
                   <i className="fa-brands fa-whatsapp" /> WhatsApp Enquiry
                 </a>
-                <button onClick={() => setShowPaymentModal(true)} className="btn btn-outline btn-lg">
+                <button onClick={() => { setShowOrderModal(true); setOrderStep(1); }} className="btn btn-outline btn-lg">
                   <i className="fa-solid fa-shopping-cart" /> Buy Now
                 </button>
               </div>
@@ -192,23 +228,87 @@ export default function ProductDetail() {
         </div>
       </section>
 
-      {/* Payment Modal */}
-      {showPaymentModal && (
-        <div className="upi-modal-overlay" onClick={() => setShowPaymentModal(false)}>
-          <div className="upi-modal-content" onClick={e => e.stopPropagation()}>
-            <UPIPayment 
-              amount={product.price} 
-              note={`Purchase: ${product.name}`} 
-              onClose={() => setShowPaymentModal(false)}
-            />
-            <div style={{ textAlign: 'center', marginTop: '16px', background: 'var(--card-bg)', padding: '16px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
-              <p style={{ color: 'var(--text-muted)', marginBottom: '12px', fontSize: '14px' }}>
-                Paid? Please send us a screenshot via WhatsApp to confirm your order.
-              </p>
-              <a href={getWhatsAppLink(`Hi! I just bought ${product.name} for ₹${product.price}. Here is my payment screenshot:`)} target="_blank" rel="noopener noreferrer" className="btn btn-whatsapp" style={{ width: '100%', justifyContent: 'center' }}>
-                <i className="fa-brands fa-whatsapp" /> Share Screenshot
-              </a>
-            </div>
+      {/* Order Modal */}
+      {showOrderModal && (
+        <div className="upi-modal-overlay" onClick={() => setShowOrderModal(false)}>
+          <div className="upi-modal-content" onClick={e => e.stopPropagation()} style={{maxWidth: '450px'}}>
+            
+            {/* Close Button */}
+            <button className="upi-modal-close" onClick={() => setShowOrderModal(false)}>
+              <i className="fa-solid fa-times" />
+            </button>
+
+            {orderStep === 1 ? (
+              <div className="order-form-step">
+                <h3 style={{marginBottom: '20px'}}>Order Details</h3>
+                <div className="form-group" style={{marginBottom: '16px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Full Name</label>
+                  <input type="text" className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)'}} value={orderDetails.name} onChange={e => setOrderDetails({...orderDetails, name: e.target.value})} placeholder="Enter your full name" required />
+                </div>
+                <div className="form-group" style={{marginBottom: '16px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Delivery Address</label>
+                  <textarea className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)', resize: 'vertical'}} value={orderDetails.address} onChange={e => setOrderDetails({...orderDetails, address: e.target.value})} placeholder="Enter full delivery address" rows="3" required></textarea>
+                </div>
+                <div className="form-group" style={{marginBottom: '20px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontWeight: '500'}}>Quantity</label>
+                  <input type="number" className="form-control" style={{width: '100%', padding: '10px 14px', border: '1px solid var(--border-color)', borderRadius: '8px', background: 'var(--bg-color)', color: 'var(--text-color)'}} value={orderDetails.quantity} onChange={e => setOrderDetails({...orderDetails, quantity: Math.max(1, parseInt(e.target.value) || 1)})} min="1" required />
+                </div>
+
+                <div className="order-summary" style={{background: 'var(--card-bg)', border: '1px solid var(--border-color)', padding: '16px', borderRadius: '8px', marginBottom: '20px'}}>
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
+                    <span style={{color: 'var(--text-muted)'}}>Item Total ({orderDetails.quantity} x ₹{product.price.toLocaleString('en-IN')})</span>
+                    <span>₹{(product.price * orderDetails.quantity).toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '12px'}}>
+                    <span style={{color: 'var(--text-muted)'}}>Delivery Charge</span>
+                    <span>₹{deliveryCharge.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div style={{display: 'flex', justifyContent: 'space-between', fontWeight: 'bold', fontSize: '18px', borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px'}}>
+                    <span>Total Amount</span>
+                    <span style={{color: 'var(--orange)'}}>₹{totalAmount.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                <button 
+                  className="btn btn-primary" 
+                  style={{width: '100%', justifyContent: 'center', padding: '14px', fontSize: '16px'}}
+                  onClick={() => {
+                    if(!orderDetails.name || !orderDetails.address) {
+                      toast.error("Please fill all details");
+                      return;
+                    }
+                    setOrderStep(2);
+                  }}
+                >
+                  Proceed to Pay
+                </button>
+              </div>
+            ) : (
+              <div className="order-payment-step">
+                <button onClick={() => setOrderStep(1)} className="btn btn-outline" style={{marginBottom: '20px', padding: '6px 14px', fontSize: '14px'}}>
+                  <i className="fa-solid fa-arrow-left" style={{marginRight: '8px'}} /> Back
+                </button>
+                <UPIPayment 
+                  amount={totalAmount} 
+                  note={`Order: ${product.name}`} 
+                  onClose={() => setShowOrderModal(false)}
+                />
+                <div style={{ textAlign: 'center', marginTop: '20px', background: 'var(--card-bg)', padding: '20px', borderRadius: '12px', border: '1px solid var(--card-border)' }}>
+                  <p style={{ color: 'var(--text-muted)', marginBottom: '16px', fontSize: '15px', lineHeight: '1.5' }}>
+                    Scan and pay <strong>₹{totalAmount.toLocaleString('en-IN')}</strong>. Once paid, click below to confirm and send the screenshot on WhatsApp.
+                  </p>
+                  <button 
+                    onClick={handleConfirmOrder} 
+                    disabled={isSubmitting}
+                    className="btn btn-whatsapp" 
+                    style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '16px' }}
+                  >
+                    {isSubmitting ? <i className="fa-solid fa-spinner fa-spin" style={{marginRight: '8px'}} /> : <i className="fa-brands fa-whatsapp" style={{marginRight: '8px'}} />} 
+                    {isSubmitting ? 'Processing...' : 'Payment Completed'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
