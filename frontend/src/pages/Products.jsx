@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { getWhatsAppLink } from '../data/data';
+import { getWhatsAppLink, productCategories } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './Products.css';
@@ -9,24 +9,11 @@ export default function Products() {
   const [activeCategory, setActiveCategory] = useState('all');
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchProducts();
-    fetchCategories();
   }, []);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get('/categories');
-      if (response.data.success) {
-        setCategories(response.data.categories);
-      }
-    } catch (error) {
-      console.error('Failed to load categories');
-    }
-  };
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -69,7 +56,7 @@ export default function Products() {
               >
                 <i className="fa-solid fa-grip" /> All Products
               </button>
-              {categories.map(c => (
+              {productCategories.map(c => (
                 <button
                   key={c.id}
                   className={`cat-tab ${activeCategory === c.id ? 'cat-tab--active' : ''}`}

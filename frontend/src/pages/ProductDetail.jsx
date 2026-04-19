@@ -1,6 +1,7 @@
+import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import UPIPayment from '../components/UPIPayment';
-import { getWhatsAppLink } from '../data/data';
+import { getWhatsAppLink, productCategories } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
 import './ProductDetail.css';
@@ -10,25 +11,12 @@ export default function ProductDetail() {
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [related, setRelated] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   useEffect(() => {
     fetchProduct();
-    fetchCategories();
   }, [id]);
-
-  const fetchCategories = async () => {
-    try {
-      const response = await api.get('/categories');
-      if (response.data.success) {
-        setCategories(response.data.categories);
-      }
-    } catch (error) {
-      console.error('Failed to load categories');
-    }
-  };
 
   const fetchRelated = async (categoryId) => {
     try {
@@ -79,7 +67,7 @@ export default function ProductDetail() {
     );
   }
 
-  const catLabel = categories.find(c => c.id === product.category)?.label;
+  const catLabel = productCategories.find(c => c.id === product.category)?.label;
   const waMsg    = `Hi! I'm interested in ${product.name} (₹${product.price.toLocaleString('en-IN')}). Please share more details.`;
 
   return (

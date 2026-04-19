@@ -38,7 +38,6 @@ app.use(morgan('dev'));
 // ── Routes ──
 app.use('/api/auth',     require('./routes/auth.routes'));
 app.use('/api/products', require('./routes/product.routes'));
-app.use('/api/categories', require('./routes/category.routes'));
 app.use('/api/bookings', require('./routes/booking.routes'));
 app.use('/api/contacts', require('./routes/contact.routes'));
 app.use('/api/services', require('./routes/service.routes'));
