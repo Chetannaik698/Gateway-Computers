@@ -15,6 +15,12 @@
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
 }
 
+/* Ensure navbar creates a stacking context */
+.navbar__inner {
+  position: relative;
+  z-index: 1;
+}
+
 .navbar__inner {
   display: flex;
   align-items: center;
@@ -144,14 +150,14 @@
   height: 2px;
   background: white;
   border-radius: 2px;
-  transition: var(--transition);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   transform-origin: center;
 }
 .theme-light .hamburger span {
   background: var(--text-primary);
 }
 .hamburger--open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
-.hamburger--open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger--open span:nth-child(2) { opacity: 0; transform: scaleX(0); transition: opacity 0.2s ease; }
 .hamburger--open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* Mobile Menu */
@@ -164,15 +170,20 @@
   transform: translateX(-100%);
   transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 .mobile-menu--open {
   transform: translateX(0);
+}
+.theme-light .mobile-menu {
+  background: #ffffff;
 }
 .mobile-nav {
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-height: calc(100vh - var(--nav-height));
 }
 .mobile-nav-link {
   display: block;
@@ -183,6 +194,7 @@
   border-radius: 10px;
   transition: var(--transition);
   border-left: 3px solid transparent;
+  background: transparent;
 }
 .mobile-nav-link:hover {
   color: var(--mobile-nav-link-hover-color);
@@ -210,13 +222,52 @@
 .mobile-overlay {
   position: fixed;
   inset: 0;
+  top: var(--nav-height);
   background: rgba(0,0,0,0.6);
   z-index: 998;
   backdrop-filter: blur(2px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.35s ease, visibility 0.35s ease;
+}
+.mobile-overlay.active {
+  opacity: 1;
+  visibility: visible;
 }
 
 /* Responsive */
 @media (max-width: 900px) {
-  .navbar__links, .navbar__cta { display: none; }
-  .hamburger { display: flex; }
+  .navbar__links { display: none !important; }
+  .navbar__cta { display: none !important; }
+  .hamburger { display: flex !important; }
+}
+
+@media (max-width: 480px) {
+  .navbar__inner {
+    gap: 12px;
+  }
+  
+  .logo-image {
+    height: 40px;
+    max-width: 120px;
+  }
+  
+  .hamburger {
+    width: 36px;
+    height: 36px;
+  }
+  
+  .hamburger span {
+    width: 20px;
+    height: 2px;
+  }
+  
+  .mobile-nav {
+    padding: 16px;
+  }
+  
+  .mobile-nav-link {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
 }

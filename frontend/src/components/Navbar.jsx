@@ -176,7 +176,7 @@ export default function Navbar() {
         </nav>
       </div>
 
-      {menuOpen && <div className="mobile-overlay" onClick={() => setMenuOpen(false)} />}
+      {menuOpen && <div className="mobile-overlay active" onClick={() => setMenuOpen(false)} />}
     </header>
   );
 }
