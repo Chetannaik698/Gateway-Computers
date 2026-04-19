@@ -711,18 +711,22 @@ function Services({ list }) {
 
 /* ── Categories ── */
 function Categories({ list, onRefresh }) {
-  const [form, setForm] = useState({ id: '', label: '', icon: 'fa-box' });
+  const [form, setForm] = useState({ id: '', label: '' });
 
   const handleAdd = async () => {
     if (!form.id || !form.label) {
-      toast.error('ID and Label are required');
+      toast.error('ID and Name are required');
       return;
     }
     try {
-      const response = await api.post('/categories', form);
+      const response = await api.post('/categories', { 
+        id: form.id.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, ''),
+        label: form.label,
+        icon: 'fa-box'
+      });
       if (response.data.success) {
-        toast.success('Category added');
-        setForm({ id: '', label: '', icon: 'fa-box' });
+        toast.success('Category added successfully!');
+        setForm({ id: '', label: '' });
         onRefresh();
       }
     } catch (error) {
@@ -731,7 +735,7 @@ function Categories({ list, onRefresh }) {
   };
 
   const handleDelete = async (id) => {
-    if (!confirm('Delete this category?')) return;
+    if (!confirm('Are you sure you want to delete this category?')) return;
     try {
       const response = await api.delete(`/categories/${id}`);
       if (response.data.success) {
@@ -746,23 +750,29 @@ function Categories({ list, onRefresh }) {
   return (
     <div className="admin-table-page">
       <div className="admin-form-card" style={{ marginBottom: '32px' }}>
-        <h2 style={{ marginBottom: '16px' }}>Add New Category</h2>
+        <h2 style={{ marginBottom: '16px', fontSize: '18px', fontWeight: '700' }}>Add New Category</h2>
         <div className="admin-form-grid">
           <div className="form-group">
-            <label>Category ID (e.g. "gaming-pcs") *</label>
-            <input className="form-control" value={form.id} onChange={e => setForm({...form, id: e.target.value.toLowerCase().replace(/\s+/g, '-')})} />
+            <label>Category ID (e.g. "laptops", "accessories") *</label>
+            <input 
+              className="form-control" 
+              value={form.id} 
+              onChange={e => setForm({...form, id: e.target.value.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '')})} 
+              placeholder="Enter category ID"
+            />
           </div>
           <div className="form-group">
-            <label>Label (e.g. "Gaming PCs") *</label>
-            <input className="form-control" value={form.label} onChange={e => setForm({...form, label: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label>Icon Class (e.g. "fa-desktop")</label>
-            <input className="form-control" value={form.icon} onChange={e => setForm({...form, icon: e.target.value})} />
+            <label>Category Name (e.g. "Laptops") *</label>
+            <input 
+              className="form-control" 
+              value={form.label} 
+              onChange={e => setForm({...form, label: e.target.value})} 
+              placeholder="Enter category name"
+            />
           </div>
         </div>
-        <button className="btn btn-primary" onClick={handleAdd} style={{ marginTop: '16px' }}>
-          Add Category
+        <button className="btn btn-primary" onClick={handleAdd} style={{ marginTop: '20px' }}>
+          <i className="fa-solid fa-plus" /> Add Category
         </button>
       </div>
 
@@ -773,25 +783,32 @@ function Categories({ list, onRefresh }) {
         <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Label</th>
-              <th>Icon</th>
-              <th>Actions</th>
+              <th style={{width: '80px'}}>S.No</th>
+              <th>Category ID</th>
+              <th>Category Name</th>
+              <th style={{width: '100px'}}>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {list.map(c => (
-              <tr key={c.id}>
-                <td style={{ fontWeight: 'bold', color: 'white' }}>{c.id}</td>
-                <td>{c.label}</td>
-                <td><i className={`fa-solid ${c.icon}`} style={{ marginRight: '8px' }} /> {c.icon}</td>
+            {list.map((c, index) => (
+              <tr key={c._id || c.id}>
+                <td style={{ fontWeight: '600', color: 'var(--orange)' }}>{index + 1}</td>
+                <td style={{ fontWeight: '500', fontFamily: 'monospace', background: 'rgba(255,107,0,0.1)', padding: '6px 12px', borderRadius: '4px', display: 'inline-block' }}>{c.id}</td>
+                <td style={{ fontWeight: '600', color: 'white', fontSize: '15px' }}>{c.label}</td>
                 <td>
-                  <button className="tbl-btn tbl-btn--del" onClick={() => handleDelete(c.id)}>
+                  <button className="tbl-btn tbl-btn--del" onClick={() => handleDelete(c.id)} title="Delete category">
                     <i className="fa-solid fa-trash" />
                   </button>
                 </td>
               </tr>
             ))}
+            {list.length === 0 && (
+              <tr>
+                <td colSpan="4" style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+                  No categories found. Add your first category above.
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
