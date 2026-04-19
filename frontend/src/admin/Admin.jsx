@@ -25,7 +25,7 @@ export default function Admin() {
   const [serviceList, setServiceList] = useState([]);
   const [addForm, setAddForm] = useState({ 
     name:'', 
-    category:'', 
+    category:'laptops', 
     price:'', 
     originalPrice: '',
     stock:'', 
@@ -123,8 +123,15 @@ export default function Admin() {
   };
 
   const handleAddSubmit = async () => {
-    if (!addForm.name || !addForm.price) {
-      toast.error('Please fill in required fields');
+    if (!addForm.name || !addForm.price || !addForm.category) {
+      toast.error('Please fill in all required fields (Name, Price, Category)');
+      return;
+    }
+
+    // Validate category is one of the allowed values
+    const validCategories = ['laptops', 'accessories', 'cctv', 'printers'];
+    if (!validCategories.includes(addForm.category)) {
+      toast.error('Invalid category selected. Please select a valid category.');
       return;
     }
 
@@ -405,10 +412,11 @@ function AddProduct({ form, onChange, onImageChange, onSubmit, success }) {
 
           <div className="form-group">
             <label>Category *</label>
-            <select name="category" value={form.category} onChange={onChange} className="form-control">
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.label}</option>
-              ))}
+            <select name="category" value={form.category} onChange={onChange} className="form-control" required>
+              <option value="laptops">Laptops</option>
+              <option value="accessories">Accessories</option>
+              <option value="cctv">CCTV & Security</option>
+              <option value="printers">Printers</option>
             </select>
           </div>
 

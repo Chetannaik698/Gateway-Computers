@@ -52,6 +52,15 @@ const createProduct = async (req, res) => {
   try {
     const { name, description, originalPrice, price, category, specs, badge, stock } = req.body;
 
+    // Validate category
+    const validCategories = ['laptops', 'accessories', 'cctv', 'printers'];
+    if (!category || !validCategories.includes(category)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid category. Please select one of: laptops, accessories, cctv, printers' 
+      });
+    }
+
     // Handle uploaded image URLs from Cloudinary
     const images = req.files ? req.files.map(f => f.path) : [];
 
@@ -73,6 +82,17 @@ const createProduct = async (req, res) => {
 const updateProduct = async (req, res) => {
   try {
     const updates = { ...req.body };
+    
+    // Validate category if it's being updated
+    if (updates.category) {
+      const validCategories = ['laptops', 'accessories', 'cctv', 'printers'];
+      if (!validCategories.includes(updates.category)) {
+        return res.status(400).json({ 
+          success: false, 
+          message: 'Invalid category. Please select one of: laptops, accessories, cctv, printers' 
+        });
+      }
+    }
     
     // If new images are uploaded, use Cloudinary URLs
     if (req.files?.length) {
