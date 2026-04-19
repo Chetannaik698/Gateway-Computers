@@ -6,6 +6,7 @@ exports.createOrder = async (req, res) => {
     const {
       product: productId,
       customerName,
+      customerPhone,
       customerAddress,
       quantity,
       paymentStatus
@@ -23,6 +24,7 @@ exports.createOrder = async (req, res) => {
     const order = await Order.create({
       product: productId,
       customerName,
+      customerPhone,
       customerAddress,
       quantity,
       productPrice,

@@ -659,7 +659,8 @@ function Orders({ list, onStatusChange }) {
                 <td>{new Date(o.createdAt).toLocaleDateString()}</td>
                 <td>
                   <div style={{fontWeight:500,color:'white'}}>{o.customerName}</div>
-                  <div style={{fontSize:'12px',color:'var(--text-muted)'}}>{o.customerAddress}</div>
+                  <div style={{fontSize:'13px',color:'var(--orange)',marginTop:'2px'}}>{o.customerPhone}</div>
+                  <div style={{fontSize:'12px',color:'var(--text-muted)',marginTop:'2px'}}>{o.customerAddress}</div>
                 </td>
                 <td>
                   <div style={{display:'flex',alignItems:'center',gap:'8px'}}>
@@ -679,7 +680,7 @@ function Orders({ list, onStatusChange }) {
                     <button className="tbl-btn tbl-btn--edit" onClick={() => toast.info('Order details feature coming soon')}>
                       <i className="fa-solid fa-eye" />
                     </button>
-                    <a href={`https://wa.me/?text=Hi%20${encodeURIComponent(o.customerName)},%20regarding%20your%20order%20for%20${encodeURIComponent(o.product?.name)}...`} target="_blank" rel="noopener noreferrer" className="tbl-btn tbl-btn--call" style={{background: '#25D366'}}>
+                    <a href={`https://wa.me/91${o.customerPhone}?text=Hi%20${encodeURIComponent(o.customerName)},%20regarding%20your%20order%20for%20${encodeURIComponent(o.product?.name)}...`} target="_blank" rel="noopener noreferrer" className="tbl-btn tbl-btn--call" style={{background: '#25D366'}}>
                       <i className="fa-brands fa-whatsapp" style={{color: 'white'}} />
                     </a>
                   </div>

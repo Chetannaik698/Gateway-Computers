@@ -16,6 +16,7 @@ export default function ProductDetail() {
   const [orderStep, setOrderStep] = useState(1);
   const [orderDetails, setOrderDetails] = useState({
     name: '',
+    phone: '',
     address: '',
     quantity: 1,
   });
@@ -86,6 +87,7 @@ export default function ProductDetail() {
       const res = await api.post('/orders', {
         product: product._id,
         customerName: orderDetails.name,
+        customerPhone: orderDetails.phone,
         customerAddress: orderDetails.address,
         quantity: orderDetails.quantity,
         paymentStatus: 'completed'
@@ -96,7 +98,7 @@ export default function ProductDetail() {
         setShowOrderModal(false);
         setOrderStep(1);
         
-        const msg = `Hi! I have placed an order.\n\n*Product:* ${product.name}\n*Quantity:* ${orderDetails.quantity}\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Name:* ${orderDetails.name}\n*Address:* ${orderDetails.address}\n\nHere is my payment screenshot:`;
+        const msg = `Hi! I have placed an order.\n\n*Product:* ${product.name}\n*Quantity:* ${orderDetails.quantity}\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Name:* ${orderDetails.name}\n*Phone:* ${orderDetails.phone}\n*Address:* ${orderDetails.address}\n\nHere is my payment screenshot:`;
         window.open(getWhatsAppLink(msg), '_blank');
       }
     } catch (err) {
@@ -246,6 +248,10 @@ export default function ProductDetail() {
                   <input type="text" className="form-control" value={orderDetails.name} onChange={e => setOrderDetails({...orderDetails, name: e.target.value})} placeholder="Enter your full name" required />
                 </div>
                 <div className="form-group" style={{marginBottom: '16px'}}>
+                  <label>Phone Number</label>
+                  <input type="tel" className="form-control" value={orderDetails.phone} onChange={e => setOrderDetails({...orderDetails, phone: e.target.value})} placeholder="Enter your phone number" required />
+                </div>
+                <div className="form-group" style={{marginBottom: '16px'}}>
                   <label>Delivery Address</label>
                   <textarea className="form-control" style={{resize: 'vertical'}} value={orderDetails.address} onChange={e => setOrderDetails({...orderDetails, address: e.target.value})} placeholder="Enter full delivery address" rows="3" required></textarea>
                 </div>
@@ -273,7 +279,7 @@ export default function ProductDetail() {
                   className="btn btn-primary" 
                   style={{width: '100%', justifyContent: 'center', padding: '14px', fontSize: '16px'}}
                   onClick={() => {
-                    if(!orderDetails.name || !orderDetails.address) {
+                    if(!orderDetails.name || !orderDetails.phone || !orderDetails.address) {
                       toast.error("Please fill all details");
                       return;
                     }
