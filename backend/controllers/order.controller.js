@@ -1,5 +1,6 @@
 const Order = require('../models/Order.model');
 const Product = require('../models/Product.model');
+const { sendOrderNotificationEmail } = require('../utils/email.service');
 
 exports.createOrder = async (req, res) => {
   try {
@@ -9,7 +10,10 @@ exports.createOrder = async (req, res) => {
       customerPhone,
       customerAddress,
       quantity,
-      paymentStatus
+      paymentStatus,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
     } = req.body;
 
     const product = await Product.findById(productId);
@@ -30,10 +34,33 @@ exports.createOrder = async (req, res) => {
       productPrice,
       deliveryCharge,
       totalAmount,
-      paymentStatus: paymentStatus || 'pending'
+      paymentStatus: paymentStatus || 'pending',
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature
     });
 
-    res.status(201).json({ success: true, order });
+    // Populate product details for email
+    const populatedOrder = await Order.findById(order._id).populate('product', 'name');
+
+    // Send email notification to shop owner
+    const emailResult = await sendOrderNotificationEmail({
+      productName: populatedOrder.product.name,
+      quantity,
+      productPrice,
+      totalAmount,
+      customerName,
+      customerPhone,
+      customerAddress,
+      razorpay_payment_id,
+      orderId: order._id.toString()
+    });
+
+    res.status(201).json({ 
+      success: true, 
+      order,
+      email: emailResult.success ? 'Email sent successfully' : 'Email not sent'
+    });
   } catch (error) {
     console.error('Error creating order:', error);
     res.status(500).json({ success: false, message: 'Server error' });

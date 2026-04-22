@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import UPIPayment from '../components/UPIPayment';
+import RazorpayPayment from '../components/RazorpayPayment';
 import { getWhatsAppLink, productCategories } from '../data/data';
 import api from '../utils/api';
 import { toast } from 'react-toastify';
@@ -20,7 +20,6 @@ export default function ProductDetail() {
     address: '',
     quantity: 1,
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     fetchProduct();
@@ -81,31 +80,10 @@ export default function ProductDetail() {
   const deliveryCharge = product.size === 'large' ? 200 : 150;
   const totalAmount = (product.price * orderDetails.quantity) + deliveryCharge;
 
-  const handleConfirmOrder = async () => {
-    setIsSubmitting(true);
-    try {
-      const res = await api.post('/orders', {
-        product: product._id,
-        customerName: orderDetails.name,
-        customerPhone: orderDetails.phone,
-        customerAddress: orderDetails.address,
-        quantity: orderDetails.quantity,
-        paymentStatus: 'completed'
-      });
-
-      if (res.data.success) {
-        toast.success("Order details saved! Redirecting to WhatsApp...");
-        setShowOrderModal(false);
-        setOrderStep(1);
-        
-        const msg = `Hi! I have placed an order.\n\n*Product:* ${product.name}\n*Quantity:* ${orderDetails.quantity}\n*Total Amount:* ₹${totalAmount.toLocaleString('en-IN')}\n*Name:* ${orderDetails.name}\n*Phone:* ${orderDetails.phone}\n*Address:* ${orderDetails.address}\n\nHere is my payment screenshot:`;
-        window.open(getWhatsAppLink(msg), '_blank');
-      }
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to place order');
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleOrderSuccess = (order) => {
+    // Order already created in RazorpayPayment component
+    // Just show success and modal will close automatically
+    console.log('Order created:', order);
   };
 
   return (
@@ -294,25 +272,16 @@ export default function ProductDetail() {
                 <button onClick={() => setOrderStep(1)} className="btn btn-outline" style={{marginBottom: '20px', padding: '6px 14px', fontSize: '14px'}}>
                   <i className="fa-solid fa-arrow-left" style={{marginRight: '8px'}} /> Back
                 </button>
-                <UPIPayment 
+                <RazorpayPayment 
                   amount={totalAmount} 
-                  note={`Order: ${product.name}`} 
-                  onClose={() => setShowOrderModal(false)}
+                  product={product}
+                  customerDetails={orderDetails}
+                  onSuccess={handleOrderSuccess}
+                  onClose={() => {
+                    setShowOrderModal(false);
+                    setOrderStep(1);
+                  }}
                 />
-                <div className="payment-confirmation-box">
-                  <p>
-                    Scan and pay <strong>₹{totalAmount.toLocaleString('en-IN')}</strong>. Once paid, click below to confirm and send the screenshot on WhatsApp.
-                  </p>
-                  <button 
-                    onClick={handleConfirmOrder} 
-                    disabled={isSubmitting}
-                    className="btn btn-whatsapp" 
-                    style={{ width: '100%', justifyContent: 'center', padding: '14px', fontSize: '16px' }}
-                  >
-                    {isSubmitting ? <i className="fa-solid fa-spinner fa-spin" style={{marginRight: '8px'}} /> : <i className="fa-brands fa-whatsapp" style={{marginRight: '8px'}} />} 
-                    {isSubmitting ? 'Processing...' : 'Payment Completed'}
-                  </button>
-                </div>
               </div>
             )}
           </div>

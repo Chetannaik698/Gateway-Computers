@@ -35,6 +35,18 @@ export default function Admin() {
   });
   const [addSuccess, setAddSuccess] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    category: 'laptops',
+    price: '',
+    originalPrice: '',
+    stock: '',
+    desc: '',
+    badge: '',
+    specs: ''
+  });
   const navigate = useNavigate();
   const { user, logout, isAdmin, token } = useAuth();
 
@@ -199,6 +211,82 @@ export default function Admin() {
     }
   };
 
+  const openEditModal = (product) => {
+    setEditingProduct(product);
+    setEditForm({
+      name: product.name || '',
+      category: product.category || 'laptops',
+      price: product.price || '',
+      originalPrice: product.originalPrice || '',
+      stock: product.stock || '',
+      desc: product.description || '',
+      badge: product.badge || '',
+      specs: product.specs ? product.specs.join(', ') : ''
+    });
+    setEditModalOpen(true);
+  };
+
+  const handleEditChange = e => setEditForm(f => ({ ...f, [e.target.name]: e.target.value }));
+
+  const handleEditImageChange = e => {
+    const files = Array.from(e.target.files);
+    setEditForm(f => ({ ...f, images: files }));
+  };
+
+  const handleEditSubmit = async () => {
+    if (!editForm.name || !editForm.price || !editForm.category) {
+      toast.error('Please fill in all required fields (Name, Price, Category)');
+      return;
+    }
+
+    const validCategories = ['laptops', 'accessories', 'cctv', 'printers'];
+    if (!validCategories.includes(editForm.category)) {
+      toast.error('Invalid category selected. Please select a valid category.');
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('name', editForm.name);
+      formData.append('description', editForm.desc);
+      formData.append('price', Number(editForm.price));
+      if (editForm.originalPrice) {
+        formData.append('originalPrice', Number(editForm.originalPrice));
+      }
+      formData.append('category', editForm.category);
+      formData.append('stock', Number(editForm.stock) || 0);
+      if (editForm.badge) {
+        formData.append('badge', editForm.badge);
+      }
+      
+      if (editForm.specs) {
+        const specsArray = editForm.specs.split(',').map(s => s.trim()).filter(s => s);
+        formData.append('specs', JSON.stringify(specsArray));
+      }
+
+      if (editForm.images && editForm.images.length > 0) {
+        editForm.images.forEach(image => {
+          formData.append('images', image);
+        });
+      }
+
+      const response = await api.put(`/products/${editingProduct._id}`, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.success) {
+        toast.success('Product updated successfully!');
+        setEditModalOpen(false);
+        setEditingProduct(null);
+        fetchProducts();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Failed to update product');
+    }
+  };
+
   const updateBookingStatus = async (id, status) => {
     try {
       const response = await api.put(`/bookings/${id}/status`, { status });
@@ -291,13 +379,25 @@ export default function Admin() {
         <div className="admin-content">
           {page === 'dashboard'       && <Dashboard productList={productList} bookingList={bookingList} orderList={orderList} />}
           {page === 'add-product'     && <AddProduct form={addForm} onChange={handleAddChange} onImageChange={handleImageChange} onSubmit={handleAddSubmit} success={addSuccess} />}
-          {page === 'manage-products' && <ManageProducts list={productList} onDelete={deleteProduct} />}
+          {page === 'manage-products' && <ManageProducts list={productList} onDelete={deleteProduct} onEdit={openEditModal} />}
           {page === 'bookings'        && <Bookings list={bookingList} onStatusChange={updateBookingStatus} />}
           {page === 'orders'          && <Orders list={orderList} onStatusChange={updateOrderStatus} />}
           {page === 'contacts'        && <Contacts list={contactList} />}
           {page === 'services'        && <Services list={serviceList} />}
         </div>
       </div>
+
+      {/* Edit Product Modal */}
+      {editModalOpen && (
+        <EditProductModal
+          form={editForm}
+          onChange={handleEditChange}
+          onImageChange={handleEditImageChange}
+          onSubmit={handleEditSubmit}
+          onClose={() => { setEditModalOpen(false); setEditingProduct(null); }}
+          product={editingProduct}
+        />
+      )}
     </div>
   );
 }
@@ -494,7 +594,7 @@ function AddProduct({ form, onChange, onImageChange, onSubmit, success }) {
 }
 
 /* ── Manage Products ── */
-function ManageProducts({ list, onDelete }) {
+function ManageProducts({ list, onDelete, onEdit }) {
   const [search, setSearch] = useState('');
   const filtered = list.filter(p => p.name.toLowerCase().includes(search.toLowerCase()));
 
@@ -545,7 +645,7 @@ function ManageProducts({ list, onDelete }) {
                   </td>
                   <td>
                     <div className="tbl-actions">
-                      <button className="tbl-btn tbl-btn--edit"><i className="fa-solid fa-pen" /></button>
+                      <button className="tbl-btn tbl-btn--edit" onClick={() => onEdit(p)}><i className="fa-solid fa-pen" /></button>
                       <button className="tbl-btn tbl-btn--del" onClick={() => onDelete(p._id)}><i className="fa-solid fa-trash" /></button>
                     </div>
                   </td>
@@ -806,6 +906,148 @@ function Services({ list }) {
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+/* ── Edit Product Modal ── */
+function EditProductModal({ form, onChange, onImageChange, onSubmit, onClose, product }) {
+  const categories = [
+    { id: 'laptops', label: 'Laptops' },
+    { id: 'accessories', label: 'Accessories' },
+    { id: 'cctv', label: 'CCTV & Security' },
+    { id: 'printers', label: 'Printers' },
+  ];
+
+  return (
+    <div className="edit-modal-overlay" style={{
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: 'rgba(0,0,0,0.7)',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      zIndex: 1000,
+      padding: '20px'
+    }}>
+      <div className="edit-modal-content" style={{
+        background: 'var(--card-bg)',
+        borderRadius: '12px',
+        maxWidth: '800px',
+        width: '100%',
+        maxHeight: '90vh',
+        overflow: 'auto',
+        padding: '32px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div>
+            <h2 style={{ margin: 0, color: 'var(--text-primary)' }}>Edit Product</h2>
+            <p style={{ margin: '4px 0 0 0', color: 'var(--text-muted)', fontSize: '14px' }}>Update product details</p>
+          </div>
+          <button onClick={onClose} style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--text-muted)',
+            fontSize: '24px',
+            cursor: 'pointer',
+            padding: '8px'
+          }}>
+            <i className="fa-solid fa-times" />
+          </button>
+        </div>
+
+        <div className="admin-form-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
+          <div className="form-group span-2">
+            <label>Product Name *</label>
+            <input name="name" value={form.name} onChange={onChange} className="form-control" placeholder="Enter product name" />
+          </div>
+
+          <div className="form-group">
+            <label>Category *</label>
+            <select name="category" value={form.category} onChange={onChange} className="form-control">
+              {categories.map(c => (
+                <option key={c.id} value={c.id}>{c.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div className="form-group">
+            <label>Selling Price (₹) *</label>
+            <input name="price" value={form.price} onChange={onChange} className="form-control" placeholder="e.g. 4999" type="number" min="0" />
+          </div>
+
+          <div className="form-group">
+            <label>Original Price / MSRP (₹) (Optional)</label>
+            <input name="originalPrice" value={form.originalPrice} onChange={onChange} className="form-control" placeholder="e.g. 5999" type="number" min="0" />
+          </div>
+
+          <div className="form-group">
+            <label>Stock Quantity</label>
+            <input name="stock" value={form.stock} onChange={onChange} className="form-control" placeholder="Units in stock" type="number" min="0" />
+          </div>
+
+          <div className="form-group">
+            <label>Product Badge</label>
+            <select name="badge" value={form.badge || ''} onChange={onChange} className="form-control">
+              <option value="">No Badge</option>
+              <option value="New">New</option>
+              <option value="Bestseller">Bestseller</option>
+              <option value="Popular">Popular</option>
+              <option value="Second-hand">Second-hand</option>
+              <option value="Pro">Pro</option>
+            </select>
+          </div>
+
+          <div className="form-group span-2">
+            <label>Product Images (Upload New Images - Optional)</label>
+            <input 
+              type="file" 
+              name="images" 
+              onChange={onImageChange} 
+              className="form-control" 
+              multiple 
+              accept="image/jpeg,image/jpg,image/png,image/webp"
+            />
+            <small style={{color:'var(--text-muted)',fontSize:'12px',marginTop:'4px',display:'block'}}>
+              Upload new images to replace existing ones (JPEG, PNG, WebP, max 5MB each)
+            </small>
+            {product?.images?.length > 0 && (
+              <div style={{marginTop:'12px'}}>
+                <p style={{fontSize:'13px',color:'var(--text-muted)',marginBottom:'8px'}}>Current Images:</p>
+                <div style={{display:'flex',gap:'8px',flexWrap:'wrap'}}>
+                  {product.images.map((img, i) => (
+                    <div key={i} style={{width:'80px',height:'80px',borderRadius:'8px',overflow:'hidden',border:'2px solid var(--card-border)'}}>
+                      <img src={img} alt={`Current ${i+1}`} style={{width:'100%',height:'100%',objectFit:'cover'}} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          <div className="form-group span-2">
+            <label>Specifications (comma-separated)</label>
+            <input name="specs" value={form.specs || ''} onChange={onChange} className="form-control" placeholder="e.g. 16GB RAM, 512GB SSD, Intel i5" />
+          </div>
+
+          <div className="form-group span-2">
+            <label>Description</label>
+            <textarea name="desc" value={form.desc} onChange={onChange} className="form-control" rows={4} placeholder="Short product description..." />
+          </div>
+        </div>
+
+        <div style={{marginTop:'24px', display:'flex', gap:'12px'}}>
+          <button className="btn btn-primary btn-lg" onClick={onSubmit}>
+            <i className="fa-solid fa-save" /> Update Product
+          </button>
+          <button className="btn btn-ghost btn-lg" onClick={onClose}>
+            <i className="fa-solid fa-times" /> Cancel
+          </button>
+        </div>
       </div>
     </div>
   );
